@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Clickjacking - mudream.online</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .explanation {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .test-area {
+            margin-bottom: 30px;
+        }
+        
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .test-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+        }
+        
+        .button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .iframe-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            border: 2px dashed #bbb;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .overlay-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+        
+        .overlay-button:hover {
+            background: rgba(192, 57, 43, 1);
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+        
+        .result {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            font-weight: bold;
+        }
+        
+        .vulneravel {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+            display: block;
+        }
+        
+        .protegido {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+            display: block;
+        }
+        
+        .indeterminado {
+            background: #fff8e1;
+            color: #f57f17;
+            border: 1px solid #ffd54f;
+            display: block;
+        }
+        
+        .summary {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        
+        .conclusion {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .protection-tips {
+            background: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .protection-tips h3 {
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+        
+        .tips-list {
+            padding-left: 20px;
+        }
+        
+        .tips-list li {
+            margin-bottom: 8px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .visible {
+            display: block;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 0;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .test-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .button {
+                margin-top: 10px;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Teste de Clickjacking</h1>
+            <p class="subtitle">Análise de vulnerabilidade para https://mudream.online</p>
+        </header>
+        
+        <div class="content">
+            <div class="explanation">
+                <h2>O que é Clickjacking?</h2>
+                <p>Clickjacking é uma técnica maliciosa que engana os usuários para que cliquem em algo diferente do que percebem, potencialmente revelando informações confidenciais ou tomando controle de seus computadores.</p>
+                <p>Este teste verifica se um site permite ser incorporado em um iframe, tornando-o potencialmente vulnerável a ataques de clickjacking.</p>
+            </div>
+            
+            <div class="test-area">
+                <div class="test-header">
+                    <h2 class="test-title">Teste 1: Iframe Simples</h2>
+                    <button id="test1" class="button">Executar Teste 1</button>
+                </div>
+                <p>Tentativa de carregar o site em um iframe. Se o site carregar, pode ser vulnerável.</p>
+                
+                <div id="iframe-container1" class="iframe-container hidden">
+                    <iframe id="iframe1" src="about:blank"></iframe>
+                </div>
+                
+                <div id="result1" class="result"></div>
+            </div>
+            
+            <div class="test-area">
+                <div class="test-header">
+                    <h2 class="test-title">Teste 2: Iframe com Overlay</h2>
+                    <button id="test2" class="button">Executar Teste 2</button>
+                </div>
+                <p>Tentativa de clicar em um botão sobreposto ao iframe. Se for possível interagir com o site através do overlay, há vulnerabilidade.</p>
+                
+                <div id="iframe-container2" class="iframe-container hidden">
+                    <iframe id="iframe2" src="about:blank"></iframe>
+                    <button id="overlay-button" class="overlay-button hidden">Clique Aqui (Overlay)</button>
+                </div>
+                
+                <div id="result2" class="result"></div>
+            </div>
+            
+            <div class="test-area">
+                <div class="test-header">
+                    <h2 class="test-title">Teste 3: Iframe Oculto</h2>
+                    <button id="test3" class="button">Executar Teste 3</button>
+                </div>
+                <p>Tentativa de carregar o site em um iframe invisível. Se o site carregar, pode ser vulnerável.</p>
+                
+                <div id="iframe-container3" class="iframe-container hidden">
+                    <iframe id="iframe3" src="about:blank"></iframe>
+                </div>
+                
+                <div id="result3" class="result"></div>
+            </div>
+            
+            <div class="summary">
+                <h2 class="conclusion">Resultado do Teste: <span id="overall-result">VULNERÁVEL</span></h2>
+                
+                <div class="protection-tips">
+                    <h3>Como se proteger contra Clickjacking?</h3>
+                    <ul class="tips-list">
+                        <li>Implementar o cabeçalho X-Frame-Options</li>
+                        <li>Utilizar Content Security Policy (CSP) com frame-ancestors</li>
+                        <li>Implementar JavaScript Frame Busting (não tão confiável)</li>
+                        <li>Validar sempre as origens de requisições</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <div class="logo">SecurityTest</div>
+            <p>Este é um teste de segurança para fins educacionais. Use com responsabilidade.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const url = 'https://mudream.online';
+            
+            // Teste 1: Iframe simples
+            document.getElementById('test1').addEventListener('click', function() {
+                const iframeContainer = document.getElementById('iframe-container1');
+                const iframe = document.getElementById('iframe1');
+                const resultDiv = document.getElementById('result1');
+                
+                iframeContainer.classList.remove('hidden');
+                iframeContainer.classList.add('visible');
+                iframe.src = url;
+                
+                // Verificar após o carregamento
+                iframe.onload = function() {
+                    try {
+                        // Tentar acessar o conteúdo do iframe
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                        
+                        // Se conseguimos acessar, pode ser vulnerável
+                        if (iframeDoc && iframeDoc.body) {
+                            resultDiv.textContent = '✅ Site carregado com sucesso no iframe. Possível vulnerabilidade a clickjacking.';
+                            resultDiv.className = 'result vulneravel';
+                        }
+                    } catch (e) {
+                        // Se houver erro de mesma origem, o site pode estar protegido
+                        resultDiv.textContent = '❌ Erro ao acessar o iframe. O site pode estar protegido contra clickjacking.';
+                        resultDiv.className = 'result protegido';
+                    }
+                };
+                
+                // Em caso de erro de carregamento
+                iframe.onerror = function() {
+                    resultDiv.textContent = '⚠️ Erro ao carregar o site no iframe.';
+                    resultDiv.className = 'result indeterminado';
+                };
+            });
+            
+            // Teste 2: Iframe com overlay
+            document.getElementById('test2').addEventListener('click', function() {
+                const iframeContainer = document.getElementById('iframe-container2');
+                const iframe = document.getElementById('iframe2');
+                const resultDiv = document.getElementById('result2');
+                const overlayButton = document.getElementById('overlay-button');
+                
+                iframeContainer.classList.remove('hidden');
+                iframeContainer.classList.add('visible');
+                overlayButton.classList.remove('hidden');
+                iframe.src = url;
+                
+                // Configurar o botão de overlay
+                overlayButton.onclick = function() {
+                    resultDiv.textContent = '✅ Foi possível clicar no botão sobreposto. Vulnerabilidade a clickjacking confirmada.';
+                    resultDiv.className = 'result vulneravel';
+                };
+                
+                // Verificar após o carregamento
+                iframe.onload = function() {
+                    try {
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                        
+                        if (iframeDoc && iframeDoc.body) {
+                            resultDiv.textContent = 'ℹ️ Site carregado. Tente clicar no botão vermelho sobreposto.';
+                            resultDiv.className = 'result';
+                        }
+                    } catch (e) {
+                        resultDiv.textContent = 'ℹ️ Erro de mesma origem. Tente clicar no botão sobreposto.';
+                        resultDiv.className = 'result';
+                    }
+                };
+            });
+            
+            // Teste 3: Iframe oculto
+            document.getElementById('test3').addEventListener('click', function() {
+                const iframeContainer = document.getElementById('iframe-container3');
+                const iframe = document.getElementById('iframe3');
+                const resultDiv = document.getElementById('result3');
+                
+                iframeContainer.classList.remove('hidden');
+                iframeContainer.classList.add('visible');
+                iframe.src = url;
+                
+                // Tornar o iframe invisível
+                iframe.style.opacity = '0';
+                iframe.style.position = 'absolute';
+                iframe.style.zIndex = '-1';
+                
+                // Verificar após o carregamento
+                iframe.onload = function() {
+                    try {
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                        
+                        if (iframeDoc && iframeDoc.body) {
+                            resultDiv.textContent = '✅ Site carregado em iframe invisível. Vulnerabilidade a clickjacking confirmada.';
+                            resultDiv.className = 'result vulneravel';
+                        }
+                    } catch (e) {
+                        resultDiv.textContent = '❌ Erro de mesma origem. O site pode estar protegido contra clickjacking.';
+                        resultDiv.className = 'result protegido';
+                    }
+                };
+            });
+        });
+    </script>
+</body>
+</html>
